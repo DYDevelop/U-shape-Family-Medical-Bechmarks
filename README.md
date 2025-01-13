@@ -7,11 +7,6 @@ For easy evaluation and fair comparison on 2D medical image segmentation method,
 ##### News 🥰
 
 - CMUNeXt is now on this repo ! 😘
-- Added K-fold validation for training
-- Added multiclass segmentation training
-- Added multiclass segmentation inference
-- Added patience to early stop training
-- Modified validation based on BCEDiceLoss
 
 This repositories has collected and re-implemented medical image segmentation networks based on U-shape architecture are followed:
 
@@ -66,11 +61,11 @@ Please put the [BUSI](https://www.kaggle.com/aryashah2k/breast-ultrasound-images
 
 ## Environments
 
-- GPU: NVIDIA GeForce RTX3090Ti GPU
+- GPU: NVIDIA GeForce RTX4090 GPU
 - Pytorch: 1.13.0 cuda 11.7
 - cudatoolkit: 11.7.1
-- Python 3.9
-- Create conda environment and run lines in conda_install.txt
+- scikit-learn: 1.0.2
+- albumentations: 1.2.0
 
 ## Training
 
@@ -83,7 +78,7 @@ python split.py --dataset_root ./data --dataset_name busi
 Then, training and validating your dataset:
 
 ```python
-python main.py --model [CMUNeXt/CMUNet/TransUnet/...] --base_dir ./data/busi --train_file_dir busi_train.txt --val_file_dir busi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 1 --k_fold 5
+python main.py --model [CMUNeXt/CMUNet/TransUnet/...] --base_dir ./data/busi --train_file_dir busi_train.txt --val_file_dir busi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8
 ```
 
 ## Inference

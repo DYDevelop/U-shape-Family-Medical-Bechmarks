@@ -168,7 +168,7 @@ def main(args):
                 img_batch, label_batch = img_batch.cuda(), label_batch.cuda()
 
                 outputs = model(img_batch)
-
+                
                 loss = criterion(outputs, label_batch)
                 iou, dice, _, _, _, _, _ = iou_score(outputs, label_batch)
                 optimizer.zero_grad()
