@@ -68,7 +68,7 @@ Please put the [BUSI](https://www.kaggle.com/aryashah2k/breast-ultrasound-images
 - GPU: NVIDIA GeForce RTX3090Ti GPU
 - Pytorch: 1.13.0 cuda 11.7
 - cudatoolkit: 11.7.1
-- python 3.9
+- Python 3.9
 - Create conda environment and run lines in conda_install.txt
 
 ## Training
