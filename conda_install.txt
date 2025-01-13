@@ -1,0 +1,8 @@
+conda install pytorch==1.13.0 torchvision==0.14.0 torchaudio==0.13.0 pytorch-cuda=11.7 -c pytorch -c nvidia -y
+conda install nvidia/label/cuda-11.7.1::cuda-nvcc -y
+conda install conda-forge::einops -y
+conda install conda-forge::yacs -y
+conda install conda-forge::matplotlib -y
+conda install conda-forge::opencv -y
+conda install conda-forge::timm -y
+conda install conda-forge::ml-collections -y
