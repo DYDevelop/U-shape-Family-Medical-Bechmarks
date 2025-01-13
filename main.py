@@ -220,15 +220,7 @@ def main(args):
             if patience == args.patience:
                 print("------------- Training Finished! -------------")
                 break
-
         print(f"------------- Fold {fold} Evaluation on Testset -------------")
-        test_avg_meters = {'test_loss': AverageMeter(),
-                            'test_iou': AverageMeter(),
-                            'test_dsc': AverageMeter(),
-                            'test_SE': AverageMeter(),
-                            'test_PC': AverageMeter(),
-                            'test_F1': AverageMeter(),
-                            'test_ACC': AverageMeter()}
         model.load_state_dict(torch.load(f'checkpoint/{args.model}_{fold}_model.pth'))
         model.eval()
         fold_metrics = validate(model, testloader, criterion, "cuda", num_classes=args.num_classes)
