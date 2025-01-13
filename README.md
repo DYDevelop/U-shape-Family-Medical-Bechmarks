@@ -82,7 +82,7 @@ python split.py --dataset_root ./data --dataset_name busi
 Then, training and validating your dataset:
 
 ```python
-python main.py --model [CMUNeXt/CMUNet/TransUnet/...] --base_dir ./data/busi --train_file_dir busi_train.txt --val_file_dir busi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8
+python main.py --model [CMUNeXt/CMUNet/TransUnet/...] --base_dir ./data/busi --train_file_dir busi_train.txt --val_file_dir busi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 1 --k_fold 5
 ```
 
 ## Inference
