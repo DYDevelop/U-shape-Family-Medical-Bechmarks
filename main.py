@@ -225,6 +225,7 @@ def main(args):
 
             if patience == args.patience:
                 print("------------- Training Finished! -------------")
+                break
 
         print("------------- Training Finished! -------------")
         print(f"------------- Fold {fold} Evaluation on Testset -------------")
