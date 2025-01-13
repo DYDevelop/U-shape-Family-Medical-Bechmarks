@@ -127,7 +127,7 @@ def getDataloader(args, fold):
 
 def main(args):
     base_lr = args.base_lr
-
+    eval_metrics = {'IoU':[],'DSC':[],'SE':[],'PC':[],'F1':[],'ACC':[]}
     for fold in range(args.k_fold):
         print(f'------------- Fold {fold} Training Started -------------')
 
@@ -159,14 +159,7 @@ def main(args):
                         'val_SE': AverageMeter(),
                         'val_PC': AverageMeter(),
                         'val_F1': AverageMeter(),
-                        'val_ACC': AverageMeter(),
-                        'test_loss': AverageMeter(),
-                        'test_iou': AverageMeter(),
-                        'test_dsc': AverageMeter(),
-                        'test_SE': AverageMeter(),
-                        'test_PC': AverageMeter(),
-                        'test_F1': AverageMeter(),
-                        'test_ACC': AverageMeter()}
+                        'val_ACC': AverageMeter()}
 
             for i_batch, sampled_batch in enumerate(trainloader):
 
@@ -235,7 +228,13 @@ def main(args):
 
         print("------------- Training Finished! -------------")
         print(f"------------- Fold {fold} Evaluation on Testset -------------")
-
+        test_avg_meters = {'test_loss': AverageMeter(),
+                            'test_iou': AverageMeter(),
+                            'test_dsc': AverageMeter(),
+                            'test_SE': AverageMeter(),
+                            'test_PC': AverageMeter(),
+                            'test_F1': AverageMeter(),
+                            'test_ACC': AverageMeter()}
         model.load_state_dict(torch.load(f'checkpoint/{args.model}_{fold}_model.pth'))
         model.eval()
         with torch.no_grad():
@@ -245,18 +244,25 @@ def main(args):
                 output = model(img_batch)
                 loss = criterion(output, label_batch)
                 iou, dice, SE, PC, F1, _, ACC = iou_score(output, label_batch)
-                avg_meters['test_loss'].update(loss.item(), img_batch.size(0))
-                avg_meters['test_iou'].update(iou, img_batch.size(0))
-                avg_meters['test_dsc'].update(dice, img_batch.size(0))
-                avg_meters['test_SE'].update(SE, img_batch.size(0))
-                avg_meters['test_PC'].update(PC, img_batch.size(0))
-                avg_meters['test_F1'].update(F1, img_batch.size(0))
-                avg_meters['test_ACC'].update(ACC, img_batch.size(0))
+                test_avg_meters['test_loss'].update(loss.item(), img_batch.size(0))
+                test_avg_meters['test_iou'].update(iou, img_batch.size(0))
+                test_avg_meters['test_dsc'].update(dice, img_batch.size(0))
+                test_avg_meters['test_SE'].update(SE, img_batch.size(0))
+                test_avg_meters['test_PC'].update(PC, img_batch.size(0))
+                test_avg_meters['test_F1'].update(F1, img_batch.size(0))
+                test_avg_meters['test_ACC'].update(ACC, img_batch.size(0))
 
         print('test_loss %.4f - test_iou %.4f - test_dsc %.4f - test_SE %.4f - test_PC %.4f - test_F1 %.4f - test_ACC %.4f '
-            % (avg_meters['test_loss'].avg, avg_meters['test_iou'].avg, avg_meters['test_dsc'].avg, avg_meters['test_SE'].avg,
-            avg_meters['test_PC'].avg, avg_meters['test_F1'].avg, avg_meters['test_ACC'].avg))
+            % (test_avg_meters['test_loss'].avg, test_avg_meters['test_iou'].avg, test_avg_meters['test_dsc'].avg, test_avg_meters['test_SE'].avg,
+            test_avg_meters['test_PC'].avg, test_avg_meters['test_F1'].avg, test_avg_meters['test_ACC'].avg))
+        eval_metrics['IoU'].append(test_avg_meters['test_iou'].avg); eval_metrics['DSC'].append(test_avg_meters['test_dsc'].avg)
+        eval_metrics['SE'].append(test_avg_meters['test_SE'].avg); eval_metrics['PC'].append(test_avg_meters['test_PC'].avg)
+        eval_metrics['F1'].append(test_avg_meters['test_F1'].avg); eval_metrics['ACC'].append(test_avg_meters['test_ACC'].avg)
         print()
+
+    print(f"------------------- All Folds Training Finished -------------------")
+    for key in eval_metrics.keys():
+        print(f"{key} : {np.mean(eval_metrics[key]):.3f} ± {np.std(eval_metrics[key]):.3f}")
 
 if __name__ == "__main__":
     main(args)
