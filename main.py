@@ -23,7 +23,8 @@ from src.network.conv_based.UNet3plus import UNet3plus
 from src.network.conv_based.CMUNeXt import cmunext
 
 from src.network.transfomer_based.transformer_based_network import get_transformer_based_model
-from sklearn.model_selection import KFold
+
+from infer import validate
 
 def seed_torch(seed):
     np.random.seed(seed)
@@ -124,10 +125,10 @@ def getDataloader(args, fold):
 
     return trainloader, valloader, testloader
 
-
 def main(args):
     base_lr = args.base_lr
-    eval_metrics = {'IoU':[],'DSC':[],'SE':[],'PC':[],'F1':[],'ACC':[]}
+    total_metrics  = [{'iou':[], 'dsc':[], 'sensitivity':[], 'specificity':[], 'precision':[], 'accuracy':[], 'f1_score':[]} for _ in range(args.num_classes)]
+
     for fold in range(args.k_fold):
         print(f'------------- Fold {fold} Training Started -------------')
 
@@ -142,7 +143,7 @@ def main(args):
 
         print("{} iterations per epoch".format(len(trainloader)))
         # best_iou = 0
-        best_dsc = 0
+        best_loss = float("inf")
         iter_num = 0
         patience = 0
         max_epoch = args.epoch
@@ -205,18 +206,11 @@ def main(args):
                 avg_meters['val_loss'].avg, avg_meters['val_iou'].avg, avg_meters['val_dsc'].avg, avg_meters['val_SE'].avg,
                 avg_meters['val_PC'].avg, avg_meters['val_F1'].avg, avg_meters['val_ACC'].avg))
 
-            # if avg_meters['val_iou'].avg > best_iou:
-            #     if not os.path.isdir("./checkpoint"):
-            #         os.makedirs("./checkpoint")
-            #     torch.save(model.state_dict(), 'checkpoint/{}_model.pth'.format(args.model))
-            #     best_iou = avg_meters['val_iou'].avg
-            #     print("=> saved best model")
-
-            if avg_meters['val_dsc'].avg > best_dsc:
+            if avg_meters['val_loss'].avg < best_loss:
                 if not os.path.isdir("./checkpoint"):
                     os.makedirs("./checkpoint")
                 torch.save(model.state_dict(), 'checkpoint/{}_{}_model.pth'.format(args.model, fold))
-                best_dsc = avg_meters['val_dsc'].avg
+                best_loss = avg_meters['val_loss'].avg
                 print("=> saved best model")
                 patience = 0
             else:
@@ -227,7 +221,6 @@ def main(args):
                 print("------------- Training Finished! -------------")
                 break
 
-        print("------------- Training Finished! -------------")
         print(f"------------- Fold {fold} Evaluation on Testset -------------")
         test_avg_meters = {'test_loss': AverageMeter(),
                             'test_iou': AverageMeter(),
@@ -238,32 +231,16 @@ def main(args):
                             'test_ACC': AverageMeter()}
         model.load_state_dict(torch.load(f'checkpoint/{args.model}_{fold}_model.pth'))
         model.eval()
-        with torch.no_grad():
-            for i_batch, sampled_batch in enumerate(testloader):
-                img_batch, label_batch = sampled_batch['image'], sampled_batch['label']
-                img_batch, label_batch = img_batch.cuda(), label_batch.cuda()
-                output = model(img_batch)
-                loss = criterion(output, label_batch)
-                iou, dice, SE, PC, F1, _, ACC = iou_score(output, label_batch)
-                test_avg_meters['test_loss'].update(loss.item(), img_batch.size(0))
-                test_avg_meters['test_iou'].update(iou, img_batch.size(0))
-                test_avg_meters['test_dsc'].update(dice, img_batch.size(0))
-                test_avg_meters['test_SE'].update(SE, img_batch.size(0))
-                test_avg_meters['test_PC'].update(PC, img_batch.size(0))
-                test_avg_meters['test_F1'].update(F1, img_batch.size(0))
-                test_avg_meters['test_ACC'].update(ACC, img_batch.size(0))
+        fold_metrics = validate(model, testloader, criterion, "cuda", num_classes=args.num_classes)
 
-        print('test_loss %.4f - test_iou %.4f - test_dsc %.4f - test_SE %.4f - test_PC %.4f - test_F1 %.4f - test_ACC %.4f '
-            % (test_avg_meters['test_loss'].avg, test_avg_meters['test_iou'].avg, test_avg_meters['test_dsc'].avg, test_avg_meters['test_SE'].avg,
-            test_avg_meters['test_PC'].avg, test_avg_meters['test_F1'].avg, test_avg_meters['test_ACC'].avg))
-        eval_metrics['IoU'].append(test_avg_meters['test_iou'].avg); eval_metrics['DSC'].append(test_avg_meters['test_dsc'].avg)
-        eval_metrics['SE'].append(test_avg_meters['test_SE'].avg); eval_metrics['PC'].append(test_avg_meters['test_PC'].avg)
-        eval_metrics['F1'].append(test_avg_meters['test_F1'].avg); eval_metrics['ACC'].append(test_avg_meters['test_ACC'].avg)
-        print()
+        for classes in range(args.num_classes):
+            for key in total_metrics[classes].keys():total_metrics[classes][key].append(fold_metrics[classes][key])
 
     print(f"------------------- All Folds Training Finished -------------------")
-    for key in eval_metrics.keys():
-        print(f"{key} : {np.mean(eval_metrics[key]):.3f} ± {np.std(eval_metrics[key]):.3f}")
+    for classes in range(args.num_classes):
+        print(f'-- Final Class {classes} evaluation metrics --')
+        for key in total_metrics[classes].keys(): 
+            print(f"{key} : {np.mean(total_metrics[classes][key]):.3f} ± {np.std(total_metrics[classes][key]):.3f}")
 
 if __name__ == "__main__":
     main(args)
