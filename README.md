@@ -7,7 +7,7 @@ For easy evaluation and fair comparison on 2D medical image segmentation method,
 ##### News 🥰
 
 - CMUNeXt is now on this repo ! 😘
-- Added K-fold Validation for training
+- Added K-fold validation for training
 - Added multiclass segmentation training
 - Added patience to early stop training
 - Modified validation based on DSC
