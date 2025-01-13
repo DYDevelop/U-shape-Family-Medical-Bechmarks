@@ -150,12 +150,12 @@ class CMUNeXt(nn.Module):
 
 
 def cmunext(input_channel=3, num_classes=1, dims=[16, 32, 128, 160, 256], depths=[1, 1, 1, 3, 1], kernels=[3, 3, 7, 7, 7]):
-    return CMUNeXt(dims=dims, depths=depths, kernels=kernels, input_channel=3, num_classes=1)
+    return CMUNeXt(dims=dims, depths=depths, kernels=kernels, input_channel=3, num_classes=num_classes)
 
 
 def cmunext_s(input_channel=3, num_classes=1, dims=[8, 16, 32, 64, 128], depths=[1, 1, 1, 1, 1], kernels=[3, 3, 7, 7, 9]):
-    return CMUNeXt(dims=dims, depths=depths, kernels=kernels, input_channel=3, num_classes=1)
+    return CMUNeXt(dims=dims, depths=depths, kernels=kernels, input_channel=3, num_classes=num_classes)
 
 
 def cmunext_l(input_channel=3, num_classes=1, dims=[32, 64, 128, 256, 512], depths=[1, 1, 1, 6, 3], kernels=[3, 3, 7, 7, 7]):
-    return CMUNeXt(dims=dims, depths=depths, kernels=kernels, input_channel=3, num_classes=1)
+    return CMUNeXt(dims=dims, depths=depths, kernels=kernels, input_channel=3, num_classes=num_classes)
