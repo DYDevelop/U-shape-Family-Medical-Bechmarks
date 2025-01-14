@@ -7,6 +7,12 @@ For easy evaluation and fair comparison on 2D medical image segmentation method,
 ##### News 🥰
 
 - CMUNeXt is now on this repo ! 😘
+- Added k fold cross validation
+- Added multiclass training
+- Added multiclass inference
+- Modified inference code visualization
+- Eary stopping on training enabled
+- Modifyied bugs on codes
 
 This repositories has collected and re-implemented medical image segmentation networks based on U-shape architecture are followed:
 
