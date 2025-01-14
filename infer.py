@@ -18,6 +18,9 @@ from src.network.conv_based.UNetplus import ResNet34UnetPlus
 from src.network.conv_based.UNet3plus import UNet3plus
 from src.network.conv_based.CMUNeXt import cmunext
 from src.network.transfomer_based.transformer_based_network import get_transformer_based_model
+import cv2
+import shutil
+import torchvision.transforms as T
 
 def load_model(model_path, args, device=torch.device("cuda" if torch.cuda.is_available() else "cpu")):
     # Model selection based on argument
@@ -83,10 +86,13 @@ def validate(model, val_loader, criterion, device, save_dir="validation_results"
     model.eval()
     val_loss = 0.0
     os.makedirs(save_dir, exist_ok=True)
+    with open('/mnt/g/Prostate/data/axi/axi_val.txt', 'r') as f:
+        sample_list = f.readlines()
+    sample_list = [item.replace("\n", "") for item in sample_list]
     fold_metrics  = [{'iou':[], 'dsc':[], 'sensitivity':[], 'specificity':[], 'precision':[], 'accuracy':[], 'f1_score':[]} for _ in range(num_classes)]
     with torch.no_grad():
         for i_batch, sampled_batch in enumerate(val_loader):
-            img_batch, label_batch = sampled_batch['image'], sampled_batch['label']
+            img_batch, label_batch, batch_idx = sampled_batch['image'], sampled_batch['label'], sampled_batch['idx']
             img_batch, label_batch = img_batch.to(device), label_batch.to(device)
             outputs = model(img_batch)
             loss = criterion(outputs, label_batch)
@@ -94,18 +100,20 @@ def validate(model, val_loader, criterion, device, save_dir="validation_results"
             val_loss += loss.item()
 
             iter_eval = multiclass_metrics(outputs, label_batch)
-            if i_batch % 1 == 0:
-                # 将模型输出转换为二值图像
-                outputs = torch.sigmoid(outputs)
+            if i_batch % 10 == 0:
+                outputs = torch.squeeze(torch.sigmoid(outputs[:, 0, ...]))
+                outputs = outputs.cpu().numpy()
                 outputs[outputs > 0.5] = 1
                 outputs[outputs <= 0.5] = 0
-                output_images = outputs.cpu().data
+                output_images = outputs.astype(np.uint8) * 255
                 
-                # 保存图像
-                for idx, img in enumerate(output_images):
+                for idx, (im_idx, msk) in enumerate(zip(batch_idx, output_images)):
+                    img_np = cv2.resize(cv2.imread('/mnt/g/Prostate/data/axi/images/'+sample_list[im_idx]+'.png'), (args.img_size, args.img_size))
+                    msk = np.stack([msk]*3, axis=-1)
+                    overlay = cv2.addWeighted(img_np, 0.5, msk, 0.5, 0)
                     save_path = os.path.join(save_dir, f"batch_{i_batch}_img_{idx}.png")
-                    # 使用save_image从torchvision，或者使用其他方法将张量转换为图像并保存
-                    save_image(img, save_path)
+                    cv2.imwrite(save_path, overlay)
+                    # save_image(overlay, save_path)
 
             for classes in range(num_classes):
                 for key in fold_metrics[classes].keys():fold_metrics[classes][key].extend(iter_eval[classes][key])
@@ -127,7 +135,7 @@ if __name__ == "__main__":
     parser.add_argument('--val_file_dir', type=str, default="test_val.txt", help='validation file directory')
     parser.add_argument('--img_size', type=int, default=256, help='image size')
     parser.add_argument('--num_classes', type=int, default=1, help='number of classes')
-    parser.add_argument('--batch_size', type=int, default=1, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=4, help='batch size')
     parser.add_argument('--k_fold', type=int, default=5, help='number of folds')
     args = parser.parse_args()
 
@@ -135,6 +143,8 @@ if __name__ == "__main__":
 
     total_metrics  = [{'iou':[], 'dsc':[], 'sensitivity':[], 'specificity':[], 'precision':[], 'accuracy':[], 'f1_score':[]} for _ in range(args.num_classes)]
 
+    if os.path.exists("validation_results"): shutil.rmtree("validation_results")
+    
     for fold in range(args.k_fold):
         model = load_model(args.model_path+args.model+f'_{fold}_model.pth', args, device)
 
@@ -154,4 +164,4 @@ if __name__ == "__main__":
         for key in total_metrics[classes].keys(): 
             print(f"{key} : {np.mean(total_metrics[classes][key]):.3f} ± {np.std(total_metrics[classes][key]):.3f}")
 
-# python infer.py --model U_Net --model_path checkpoints/ --base_dir ../data/axi --val_file_dir axi_val.txt --img_size 256 --num_classes 2
+# python infer.py --model U_Net --model_path checkpoint/ --base_dir ../data/axi --val_file_dir axi_val.txt --img_size 256 --num_classes 2

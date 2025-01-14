@@ -31,6 +31,8 @@ if __name__ == '__main__':
 
 
 # python split.py --dataset_root ../data --dataset_name axi
-# python main.py --model CMUNeXt --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2
+# python main.py --model U_Net --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2 --k_fold 5
+# python main.py --model TransUnet --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2 --k_fold 5
+# python main.py --model CMUNeXt --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2 --k_fold 5
 
 # ["CMUNeXt", "CMUNet", "AttU_Net", "TransUnet", "R2U_Net", "U_Net", "UNext", "UNetplus", "UNet3plus", "SwinUnet", "MedT", "TransUnet"]
