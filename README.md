@@ -117,4 +117,4 @@ This code-base uses helper functions from [CMU-Net](https://github.com/FengheTan
 
 ## Other QS:
 
-If you have any questions or suggestions about this project, please contact me through email: 543759045@qq.com
+If you have any questions or suggestions about this project, please contact me through email: steven6774@snu.ac.kr
