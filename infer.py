@@ -20,7 +20,6 @@ from src.network.conv_based.CMUNeXt import cmunext
 from src.network.transfomer_based.transformer_based_network import get_transformer_based_model
 import cv2
 import shutil
-import torchvision.transforms as T
 
 def load_model(model_path, args, device=torch.device("cuda" if torch.cuda.is_available() else "cpu")):
     # Model selection based on argument
@@ -144,7 +143,7 @@ if __name__ == "__main__":
     total_metrics  = [{'iou':[], 'dsc':[], 'sensitivity':[], 'specificity':[], 'precision':[], 'accuracy':[], 'f1_score':[]} for _ in range(args.num_classes)]
 
     if os.path.exists("validation_results"): shutil.rmtree("validation_results")
-    
+
     for fold in range(args.k_fold):
         model = load_model(args.model_path+args.model+f'_{fold}_model.pth', args, device)
 
