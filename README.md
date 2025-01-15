@@ -10,6 +10,7 @@ For easy evaluation and fair comparison on 2D medical image segmentation method,
 - Added k fold cross validation
 - Added multiclass training
 - Added multiclass inference
+- Added learning rate scheduler
 - Modified inference code visualization
 - Eary stopping on training enabled
 - Modifyied bugs on codes
