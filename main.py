@@ -138,7 +138,9 @@ def main(args):
 
         print("train file dir:{} val file dir:{}".format(args.train_file_dir, args.val_file_dir))
 
-        optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
+        # optimizer = optim.SGD(model.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
+        optimizer = optim.AdamW(params = filter(lambda p: p.requires_grad, model.parameters()), lr = base_lr)
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=2, eta_min=1e-5)
         criterion = losses.__dict__['BCEDiceLoss']().cuda()
 
         print("{} iterations per epoch".format(len(trainloader)))
@@ -149,6 +151,7 @@ def main(args):
         max_epoch = args.epoch
 
         max_iterations = len(trainloader) * max_epoch
+        iters = len(trainloader)
         for epoch_num in range(max_epoch):
             model.train()
             avg_meters = {'loss': AverageMeter(),
@@ -161,7 +164,7 @@ def main(args):
                         'val_PC': AverageMeter(),
                         'val_F1': AverageMeter(),
                         'val_ACC': AverageMeter()}
-
+        
             for i_batch, sampled_batch in enumerate(trainloader):
 
                 img_batch, label_batch = sampled_batch['image'], sampled_batch['label']
@@ -175,14 +178,17 @@ def main(args):
                 loss.backward()
                 optimizer.step()
 
-                lr_ = base_lr * (1.0 - iter_num / max_iterations) ** 0.9
-                for param_group in optimizer.param_groups:
-                    param_group['lr'] = lr_
-
                 iter_num = iter_num + 1
                 avg_meters['loss'].update(loss.item(), img_batch.size(0))
                 avg_meters['iou'].update(iou, img_batch.size(0))
                 avg_meters['dsc'].update(dice, img_batch.size(0))
+
+                if scheduler is not None:
+                    scheduler.step(epoch_num + i_batch / iters)
+                else: # Polynomial Decay
+                    lr_ = base_lr * (1.0 - iter_num / max_iterations) ** 0.9
+                    for param_group in optimizer.param_groups:
+                        param_group['lr'] = lr_
 
             model.eval()
             with torch.no_grad():
@@ -216,6 +222,7 @@ def main(args):
             else:
                 patience += 1
                 print(f'------------- Model did not improve for {patience} times -------------')
+                print(f'Current learning rate : {scheduler.get_last_lr()[0]}')
 
             if patience == args.patience:
                 print("------------- Training Finished! -------------")

@@ -81,7 +81,7 @@ def get_val_transform(img_size):
         # ToTensorV2(),
     ])
 
-def validate(model, val_loader, criterion, device, save_dir="validation_results", num_classes=1):
+def validate(model, val_loader, criterion, device, save_dir="validation_results", num_classes=1, img_size=256):
     model.eval()
     val_loss = 0.0
     os.makedirs(save_dir, exist_ok=True)
@@ -99,6 +99,7 @@ def validate(model, val_loader, criterion, device, save_dir="validation_results"
             val_loss += loss.item()
 
             iter_eval = multiclass_metrics(outputs, label_batch)
+
             if i_batch % 10 == 0:
                 outputs = torch.squeeze(torch.sigmoid(outputs[:, 0, ...]))
                 outputs = outputs.cpu().numpy()
@@ -107,10 +108,11 @@ def validate(model, val_loader, criterion, device, save_dir="validation_results"
                 output_images = outputs.astype(np.uint8) * 255
                 
                 for idx, (im_idx, msk) in enumerate(zip(batch_idx, output_images)):
-                    img_np = cv2.resize(cv2.imread('/mnt/g/Prostate/data/axi/images/'+sample_list[im_idx]+'.png'), (args.img_size, args.img_size))
+                    img_np = cv2.resize(cv2.imread('/mnt/g/Prostate/data/axi/images/'+sample_list[im_idx]+'.png'), (img_size, img_size))
                     msk = np.stack([msk]*3, axis=-1)
                     overlay = cv2.addWeighted(img_np, 0.5, msk, 0.5, 0)
-                    save_path = os.path.join(save_dir, f"batch_{i_batch}_img_{idx}.png")
+                    
+                    save_path = os.path.join(save_dir, f"batch_{i_batch}_img_{idx}_DSC_{iter_eval[0]['dsc'][0]:.3f}.png")
                     cv2.imwrite(save_path, overlay)
                     # save_image(overlay, save_path)
 
@@ -153,7 +155,7 @@ if __name__ == "__main__":
         val_loader = DataLoader(db_val, batch_size=args.batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
         criterion = losses.__dict__['BCEDiceLoss']().to(device)
-        fold_metrics = validate(model, val_loader, criterion, device, num_classes=args.num_classes)
+        fold_metrics = validate(model, val_loader, criterion, device, num_classes=args.num_classes, img_size=args.img_size)
 
         for classes in range(args.num_classes):
             for key in total_metrics[classes].keys():total_metrics[classes][key].append(fold_metrics[classes][key])
