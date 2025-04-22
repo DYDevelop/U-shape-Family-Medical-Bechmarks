@@ -1,4 +1,4 @@
-# Medical 2D Image Segmentation Benchmarks
+# 2D Image Segmentation Benchmarks
 
 ![ushape](img/ushape.png)
 
