@@ -30,9 +30,11 @@ if __name__ == '__main__':
     print("build validate file successfully, path is: {}".format(os.path.join(root, '{}_val.txt'.format(name))))
 
 
-# python split.py --dataset_root ../data --dataset_name axi
-# python main.py --model U_Net --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2 --k_fold 5
-# python main.py --model TransUnet --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2 --k_fold 5
-# python main.py --model CMUNeXt --base_dir ../data/axi --train_file_dir axi_train.txt --val_file_dir axi_val.txt --base_lr 0.01 --epoch 300 --batch_size 8 --patience 10 --num_classes 2 --k_fold 5
+# python split.py --dataset_root ../data --dataset_name cancer
+# python main.py --model U_Net --base_dir ../data/cancer --train_file_dir cancer_train.txt --val_file_dir cancer_val.txt --base_lr 0.001 --epoch 300 --batch_size 8 --patience 10 --num_classes 1 --k_fold 5
+# python main.py --model TransUnet --base_dir ../data/cancer --train_file_dir cancer_train.txt --val_file_dir cancer_val.txt --base_lr 0.001 --epoch 300 --batch_size 8 --patience 10 --num_classes 1 --k_fold 5
+# python main.py --model UNet3plus --base_dir ../data/cancer --train_file_dir cancer_train.txt --val_file_dir cancer_val.txt --base_lr 0.001 --epoch 300 --batch_size 8 --patience 10 --num_classes 1 --k_fold 5
 
-# ["CMUNeXt", "CMUNet", "AttU_Net", "TransUnet", "R2U_Net", "U_Net", "UNext", "UNetplus", "UNet3plus", "SwinUnet", "MedT", "TransUnet"]
+# python main.py --model_smp Unet --base_dir ../data/cancer --train_file_dir cancer_train.txt --val_file_dir cancer_val.txt --base_lr 0.001 --epoch 300 --batch_size 8 --patience 10 --num_classes 1 --k_fold 5 --use_smp
+
+# ["CMUNeXt", "CMUNet", "AttU_Net", "TransUnet", "R2U_Net", "U_Net", "UNext", "UNetplus", "UNet3plus", "SwinUnet", "MedT"]

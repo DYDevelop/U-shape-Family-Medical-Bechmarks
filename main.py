@@ -13,16 +13,7 @@ from albumentations import RandomRotate90, Resize, HorizontalFlip
 import src.utils.losses as losses
 from src.utils.util import AverageMeter
 from src.utils.metrics import iou_score
-
-from src.network.conv_based.CMUNet import CMUNet
-from src.network.conv_based.U_Net import U_Net
-from src.network.conv_based.AttU_Net import AttU_Net
-from src.network.conv_based.UNeXt import UNext
-from src.network.conv_based.UNetplus import ResNet34UnetPlus
-from src.network.conv_based.UNet3plus import UNet3plus
-from src.network.conv_based.CMUNeXt import cmunext
-
-from src.network.transfomer_based.transformer_based_network import get_transformer_based_model
+from src.network.model import get_model, get_model_smp
 
 from infer import validate
 
@@ -37,8 +28,12 @@ def seed_torch(seed):
     np.random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
 
-
 parser = argparse.ArgumentParser()
+parser.add_argument("--use_smp", action='store_true',
+                        help='whether to use a custom model or the segmentation_models.pytorch library')
+parser.add_argument('--model_smp', type=str, default="Unet",
+                    choices=["Unet", "UnetPlusPlus", "MAnet", "Linknet", "FPN", "PSPNet", 
+                                   "DeepLabV3", "DeepLabV3Plus", "PAN", "UPerNet", "Segformer", "DPT"], help='smp model')
 parser.add_argument('--model', type=str, default="U_Net",
                     choices=["CMUNeXt", "CMUNet", "AttU_Net", "TransUnet", "R2U_Net", "U_Net",
                              "UNext", "UNetplus", "UNet3plus", "SwinUnet", "MedT", "TransUnet"], help='model')
@@ -56,26 +51,6 @@ parser.add_argument('--seed', type=int, default=41, help='random seed')
 args = parser.parse_args()
 seed_torch(args.seed)
 
-
-def get_model(args):
-    if args.model == "CMUNet":
-        model = CMUNet(output_ch=args.num_classes).cuda()
-    elif args.model == "CMUNeXt":
-        model = cmunext(num_classes=args.num_classes).cuda()
-    elif args.model == "U_Net":
-        model = U_Net(output_ch=args.num_classes).cuda()
-    elif args.model == "AttU_Net":
-        model = AttU_Net(output_ch=args.num_classes).cuda()
-    elif args.model == "UNext":
-        model = UNext(output_ch=args.num_classes).cuda()
-    elif args.model == "UNetplus":
-        model = ResNet34UnetPlus(num_class=args.num_classes).cuda()
-    elif args.model == "UNet3plus":
-        model = UNet3plus(n_classes=args.num_classes).cuda()
-    else:
-        model = get_transformer_based_model(parser=parser, model_name=args.model, img_size=args.img_size,
-                                            num_classes=args.num_classes, in_ch=3).cuda()
-    return model
 
 def getDataloader(args, fold):
     img_size = args.img_size
@@ -134,7 +109,12 @@ def main(args):
 
         trainloader, valloader, testloader = getDataloader(args=args, fold=fold)
 
-        model = get_model(args)
+        if args.use_smp: 
+            print("Using SMP")
+            model = get_model_smp(args)
+            print(model)
+        else: 
+            model = get_model(args)
 
         print("train file dir:{} val file dir:{}".format(args.train_file_dir, args.val_file_dir))
 
@@ -230,7 +210,7 @@ def main(args):
         print(f"------------- Fold {fold} Evaluation on Testset -------------")
         model.load_state_dict(torch.load(f'checkpoint/{args.model}_{fold}_model.pth'))
         model.eval()
-        fold_metrics = validate(model, testloader, criterion, "cuda", num_classes=args.num_classes)
+        fold_metrics = validate(args, model, testloader, criterion, "cuda", num_classes=args.num_classes)
 
         for classes in range(args.num_classes):
             for key in total_metrics[classes].keys():total_metrics[classes][key].append(fold_metrics[classes][key])

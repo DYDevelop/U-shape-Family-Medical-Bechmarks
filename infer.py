@@ -81,11 +81,11 @@ def get_val_transform(img_size):
         # ToTensorV2(),
     ])
 
-def validate(model, val_loader, criterion, device, save_dir="validation_results", num_classes=1, img_size=256):
+def validate(args, model, val_loader, criterion, device, save_dir="validation_results", num_classes=1, img_size=256):
     model.eval()
     val_loss = 0.0
     os.makedirs(save_dir, exist_ok=True)
-    with open('/mnt/g/Prostate/data/axi/axi_val.txt', 'r') as f:
+    with open(os.path.join(args.base_dir, args.val_file_dir), 'r') as f:
         sample_list = f.readlines()
     sample_list = [item.replace("\n", "") for item in sample_list]
     fold_metrics  = [{'iou':[], 'dsc':[], 'sensitivity':[], 'specificity':[], 'precision':[], 'accuracy':[], 'f1_score':[]} for _ in range(num_classes)]
@@ -108,7 +108,7 @@ def validate(model, val_loader, criterion, device, save_dir="validation_results"
                 output_images = outputs.astype(np.uint8) * 255
                 
                 for idx, (im_idx, msk) in enumerate(zip(batch_idx, output_images)):
-                    img_np = cv2.resize(cv2.imread('/mnt/g/Prostate/data/axi/images/'+sample_list[im_idx]+'.png'), (img_size, img_size))
+                    img_np = cv2.resize(cv2.imread(args.base_dir+'/images/'+sample_list[im_idx]+'.png'), (img_size, img_size))
                     msk = np.stack([msk]*3, axis=-1)
                     overlay = cv2.addWeighted(img_np, 0.5, msk, 0.5, 0)
                     
